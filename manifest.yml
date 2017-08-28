@@ -1,15 +1,15 @@
 ---
 declared-services:
-  my-conversation-service:
+  alexa-google-conversation-simple:
     label: conversation
-    plan: free
+    plan: lite
 applications:
-- name: conversation-simple
+- name: acit-conversation-simple
   command: npm start
   path: .
   memory: 256M
   instances: 1
   services:
-  - my-conversation-service
+  - alexa-google-conversation-simple
   env:
     NPM_CONFIG_PRODUCTION: false

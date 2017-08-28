@@ -17,26 +17,67 @@
 'use strict';
 
 var express = require('express'); // app server
+const watson = require('watson-developer-cloud');
 var bodyParser = require('body-parser'); // parser for post requests
-var Conversation = require('watson-developer-cloud/conversation/v1'); // watson sdk
+require('dotenv').config(); // reads environment variables from .env
 
+const conversation = new watson.ConversationV1({version_date: watson.ConversationV1.VERSION_DATE_2017_04_21});
 var app = express();
 
 // Bootstrap application settings
 app.use(express.static('./public')); // load UI from public folder
 app.use(bodyParser.json());
 
-// Create the service wrapper
-var conversation = new Conversation({
-  // If unspecified here, the CONVERSATION_USERNAME and CONVERSATION_PASSWORD env properties will be checked
-  // After that, the SDK will fall back to the bluemix-provided VCAP_SERVICES environment property
-  // username: '<username>',
-  // password: '<password>',
-  // url: 'https://gateway.watsonplatform.net/conversation/api',
-  version_date: Conversation.VERSION_DATE_2017_04_21
-});
+let context = null;
 
-const ActionsSdkApp = require('actions-on-google').ActionsSdkApp;
+const message = function(input) {
+  const payload = {
+    workspace_id: process.env.WORKSPACE_ID || '<workspace_id>',
+    input: {
+      text: input
+    },
+    context: context,
+    alternate_intents: true
+  };
+  return new Promise((resolve, reject) => conversation.message(payload, function(err, data) {
+    if (err) {
+      reject(err);
+    } else {
+      resolve(data);
+    }
+  }));
+};
+
+app.post('/', (req, res) => {
+  const input = req.body.request.intent.slots.EveryThingSlot.value;
+  message(input).then(response => {
+    context = response.context;
+    const output = response.output.text[0];
+    res.json({
+      'version': '1.0',
+      'response': {
+          'shouldEndSession': false,
+          'outputSpeech': {
+              'type': 'PlainText',
+              'text': output
+          }
+        }
+    });
+    res.end();
+  }).catch(err => {
+    res.json({
+      "version": "1.0",
+      "response": {
+          "shouldEndSession": true,
+          "outputSpeech": {
+              "type": "PlainText",
+              "text": err.message
+          }
+      }
+    });
+    res.end();
+  });
+});
 
 // Endpoint to be call from the client side
 app.post('/api/message', function(req, res) {
@@ -94,5 +135,10 @@ function updateMessage(input, response) {
   response.output.text = responseText;
   return response;
 }
+
+var listener = app.listen(8888, function(){
+    console.log('Listening on port ' + listener.address().port); //Listening on port 8888
+});
+
 
 module.exports = app;
