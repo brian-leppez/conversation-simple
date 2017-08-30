@@ -22,6 +22,8 @@ var bodyParser = require('body-parser'); // parser for post requests
 require('dotenv').config(); // reads environment variables from .env
 
 const conversation = new watson.ConversationV1({version_date: watson.ConversationV1.VERSION_DATE_2017_04_21});
+const ActionsSdkApp = require('actions-on-google').ActionsSdkApp;
+const googlepApp = new ActionsSdkApp();
 var app = express();
 
 // Bootstrap application settings
@@ -30,7 +32,31 @@ app.use(bodyParser.json());
 
 let context = null;
 
-const message = function(input) {
+let googleContext = null;
+const watsonConversation = (req, res) => {
+  const googleApp = new ActionsSdkApp({request: req, response: res});
+
+  function mainIntent (app) {
+    console.log('reached function');
+    const input = googleApp.getRawInput();
+    message(input, googleContext).then(response => {
+      console.log('Reached Watson');
+      googleContext = response.context;
+      const output = response.output.text[0];
+      googleApp.ask(output);
+    }).catch(err => {
+      googleApp.tell('Error Found. Could not connect to Watson');
+    });
+
+  }
+
+  const actionMap = new Map();
+  // actionMap.set(app.StandardIntents.TEXT, mainIntent);
+  googleApp.handleRequest(mainIntent);
+
+}
+
+const message = function(input, context) {
   const payload = {
     workspace_id: process.env.WORKSPACE_ID || '<workspace_id>',
     input: {
@@ -80,7 +106,12 @@ app.post('/', (req, res) => {
 });
 
 app.post('/google', (req, res) => {
+  watsonConversation(req, res);
   console.log('Google home has reached the POST /google endpoint');
+  // res.json({
+  //   "response": "Hello Brian!"
+  // });
+  // res.end();
 });
 
 app.get('/google', (req, res) => {

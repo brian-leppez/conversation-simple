@@ -1,0 +1,25 @@
+{
+	"actions": [
+      {
+        "description": "Default Welcome Intent",
+        "name": "MAIN",
+        "fulfillment": {
+          "conversationName": "watsonConversation"
+        },
+        "intent": {
+          "name": "actions.intent.MAIN",
+          "trigger": {
+            "queryPatterns": [
+              "talk to Brian Watson"
+            ]
+          }
+        }
+      }
+    ],
+    "conversations": {
+      "watsonConversation": {
+        "name": "watsonConversation",
+        "url": "https://0197b7b7.ngrok.io/google"
+      }
+    }
+}
