@@ -79,6 +79,14 @@ app.post('/', (req, res) => {
   });
 });
 
+app.post('/google', (req, res) => {
+  console.log('Google home has reached the POST /google endpoint');
+});
+
+app.get('/google', (req, res) => {
+  console.log('Google home has reached the GET /google endpoint');
+});
+
 // Endpoint to be call from the client side
 app.post('/api/message', function(req, res) {
   var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
